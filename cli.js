@@ -12,6 +12,7 @@ const cli = meow([`
   Options
     -f, --fork  Create and use a fork instead of pushing to a branch
     -t, --test  Don't open issues or create pull requests
+    --plugin    The JSON file for the plugin
 
   Examples
     $ build-a-space RichardLitt/build-a-space

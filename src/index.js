@@ -5,6 +5,9 @@ const querystring = require('querystring')
 const checkCommunity = require('./checkers/community')
 const checkJavascript = require('./checkers/javascript')
 const messages = require('./messages')
+const plugin = require('./checkers/plugin')
+const fs = require('mz/fs')
+const path = require('path')
 const github = axios.create({
   baseURL: env.BASE_URL,
   headers: {
@@ -53,13 +56,22 @@ module.exports = async function index (repoName, opts) {
   // Create or use an existing branch
   await getOrCreateBranch(github, currentSha)
 
+  let pluginNotes = []
+  if (opts.plugin) {
+    let newOpts = await fs.readFileSync(path.join(__dirname, `../${opts.plugin}`), 'utf8')
+    pluginNotes.push(await plugin(github, JSON.parse(newOpts)))
+  }
+
   // Check the community files
   const communityFiles = await checkCommunity(github, opts)
   // Check the JavaScript files
   const jsFiles = await checkJavascript(github)
 
+  const notes = communityFiles.concat(jsFiles, pluginNotes)
+  console.log(notes)
+
   // Create a pullrequest, and combine notes for the enduser
-  await createPullRequest(github, communityFiles.concat(jsFiles), opts)
+  await createPullRequest(github, notes, opts)
 }
 
 async function initPR (github, opts) {
